@@ -7,92 +7,114 @@
     <title>My Webnovel Website</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f9;
+            background-color: #f9f9f9;
+            color: #333;
             transition: background-color 0.3s, color 0.3s;
         }
         header {
-            background-color: #333;
-            color: #fff;
-            padding: 10px 20px;
+            background: linear-gradient(135deg, #6c63ff, #3f3d56);
+            color: white;
+            padding: 20px;
             text-align: center;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+        }
+        header p {
+            margin: 5px 0 0;
+            font-size: 1rem;
+            opacity: 0.9;
         }
         .container {
+            max-width: 1200px;
+            margin: 20px auto;
             padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
         .mode-switch {
             text-align: center;
-            margin: 10px 0;
+            margin-bottom: 20px;
         }
         .mode-switch button {
-            margin: 0 5px;
-            padding: 10px 20px;
+            margin: 0 10px;
+            padding: 10px 15px;
             border: none;
-            border-radius: 5px;
+            border-radius: 25px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: 1rem;
+            color: white;
+            background: #6c63ff;
+            transition: all 0.3s ease;
         }
         .mode-switch button:hover {
-            opacity: 0.8;
+            background: #3f3d56;
         }
-        .search-box {
-            margin-bottom: 20px;
+        .upload-box {
             text-align: center;
+            margin: 30px 0;
         }
-        .search-box input {
+        .upload-box input {
             padding: 10px;
-            width: 80%;
-            max-width: 500px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-right: 10px;
+            width: 70%;
         }
-        .novel-list {
+        .upload-box button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            background: #6c63ff;
+            color: white;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .upload-box button:hover {
+            background: #3f3d56;
+        }
+        .novel-list, .bookmarked-list {
             list-style-type: none;
             padding: 0;
+            margin: 0;
         }
         .novel-list li {
-            background-color: #fff;
+            background-color: #ffffff;
             margin: 10px 0;
             padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: transform 0.2s;
+        }
+        .novel-list li:hover {
+            transform: translateY(-3px);
         }
         .novel-list li a {
             text-decoration: none;
-            color: #333;
+            font-size: 1.2rem;
+            color: #6c63ff;
             font-weight: bold;
         }
         .novel-list li a:hover {
             text-decoration: underline;
-        }
-        .bookmarks {
-            margin-top: 30px;
-        }
-        .bookmarks h2 {
-            text-align: center;
-        }
-        .bookmarked-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .bookmarked-list li {
-            background-color: #fff;
-            margin: 10px 0;
-            padding: 15px;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 <body>
     <header>
         <h1>Welcome to My Webnovel Hub</h1>
-        <p>Explore a collection of amazing web novels!</p>
+        <p>Discover your next adventure</p>
     </header>
     <div class="container">
         <div class="mode-switch">
@@ -100,94 +122,74 @@
             <button onclick="setMode('dark')">Dark Mode</button>
             <button onclick="setMode('sepia')">Sepia Mode</button>
         </div>
-        <div class="search-box">
-            <input type="text" id="search" placeholder="Search for a novel...">
+        <div class="upload-box" id="upload-box">
+            <h2>Add New Webnovel (PDF Only)</h2>
+            <input type="file" id="pdf-upload" accept="application/pdf">
+            <button onclick="uploadPDF()">Upload PDF</button>
         </div>
-        <ul class="novel-list">
-            <!-- Dynamic content will go here -->
+        <ul class="novel-list" id="novel-list">
+            <!-- Uploaded novels will appear here -->
         </ul>
-        <div class="bookmarks">
-            <h2>Your Bookmarked Novels</h2>
-            <ul class="bookmarked-list" id="bookmarked-list">
-                <!-- Bookmarked novels will go here -->
-            </ul>
-        </div>
     </div>
     <script>
-        const novels = [
-            "https://www.lightnovelworld.co/novel/is-it-bad-to-be-a-villain",
-            "https://www.lightnovelworld.co/novel/the-return-of-the-disaster-class-hero",
-            "https://www.lightnovelworld.co/novel/otherworldly-evil-monarch",
-            "https://www.lightnovelworld.co/novel/beast-tamer",
-            "https://www.lightnovelworld.co/novel/mysteries-of-the-mind"
-        ];
+        const novels = JSON.parse(localStorage.getItem('novels')) || [];
+        const novelList = document.getElementById('novel-list');
 
-        const novelList = document.querySelector('.novel-list');
-        const bookmarkedList = document.getElementById('bookmarked-list');
-        const searchInput = document.getElementById('search');
+        function uploadPDF() {
+            const pdfInput = document.getElementById('pdf-upload');
 
-        let bookmarks = JSON.parse(localStorage.getItem('bookmarks')) || [];
+            if (pdfInput.files.length > 0) {
+                const file = pdfInput.files[0];
+                const fileName = file.name;
 
-        function displayNovels(filter = "") {
-            novelList.innerHTML = ""; // Clear the list
-            novels.forEach(url => {
-                const title = url.split('/').slice(-1)[0].replace(/-/g, ' ');
-                if (title.toLowerCase().includes(filter.toLowerCase())) {
-                    const listItem = document.createElement('li');
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.target = '_blank';
-                    link.textContent = title;
-
-                    const bookmarkButton = document.createElement('button');
-                    bookmarkButton.textContent = bookmarks.includes(url) ? "Unbookmark" : "Bookmark";
-                    bookmarkButton.onclick = () => toggleBookmark(url, title, bookmarkButton);
-
-                    listItem.appendChild(link);
-                    listItem.appendChild(bookmarkButton);
-                    novelList.appendChild(listItem);
+                if (!fileName.endsWith('.pdf')) {
+                    alert('Only PDF files are allowed.');
+                    return;
                 }
-            });
-        }
 
-        function toggleBookmark(url, title, button) {
-            if (bookmarks.includes(url)) {
-                bookmarks = bookmarks.filter(bookmark => bookmark !== url);
-                button.textContent = "Bookmark";
+                novels.push({ name: fileName, url: URL.createObjectURL(file) });
+                localStorage.setItem('novels', JSON.stringify(novels));
+                displayNovels();
+
+                alert('PDF uploaded successfully!');
+                pdfInput.value = ''; // Clear the input field
             } else {
-                bookmarks.push(url);
-                button.textContent = "Unbookmark";
+                alert('Please select a PDF file to upload.');
             }
-            localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
-            displayBookmarks();
         }
 
-        function displayBookmarks() {
-            bookmarkedList.innerHTML = ""; // Clear the list
-            bookmarks.forEach(url => {
-                const title = url.split('/').slice(-1)[0].replace(/-/g, ' ');
+        function displayNovels() {
+            novelList.innerHTML = '';
+            novels.forEach((novel, index) => {
                 const listItem = document.createElement('li');
+
                 const link = document.createElement('a');
-                link.href = url;
+                link.href = novel.url;
                 link.target = '_blank';
-                link.textContent = title;
+                link.textContent = novel.name;
+
+                const deleteButton = document.createElement('button');
+                deleteButton.textContent = 'Delete';
+                deleteButton.onclick = () => deleteNovel(index);
+
                 listItem.appendChild(link);
-                bookmarkedList.appendChild(listItem);
+                listItem.appendChild(deleteButton);
+                novelList.appendChild(listItem);
             });
         }
 
-        searchInput.addEventListener('input', () => {
-            displayNovels(searchInput.value);
-        });
+        function deleteNovel(index) {
+            novels.splice(index, 1);
+            localStorage.setItem('novels', JSON.stringify(novels));
+            displayNovels();
+        }
 
-        // Initial display of novels and bookmarks
         displayNovels();
-        displayBookmarks();
 
         function setMode(mode) {
             const body = document.body;
             if (mode === 'light') {
-                body.style.backgroundColor = '#f4f4f9';
+                body.style.backgroundColor = '#f9f9f9';
                 body.style.color = '#333';
             } else if (mode === 'dark') {
                 body.style.backgroundColor = '#121212';
