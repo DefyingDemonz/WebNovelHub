@@ -19,33 +19,29 @@
             display: block;
             border: 2px solid #000;
             border-radius: 10px;
+            position: relative;
         }
 
         .controls {
             margin: 20px 0;
         }
 
-        .controls input, .controls select {
-            margin: 5px;
-            padding: 5px 10px;
-            font-size: 1rem;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .retry-btn {
-            display: block;
-            margin: 20px auto;
-            padding: 10px 20px;
-            font-size: 1rem;
-            color: #fff;
+        .button {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background-color: #6c63ff;
+            color: white;
+            font-size: 2rem;
+            padding: 15px 30px;
             border: none;
-            border-radius: 5px;
+            border-radius: 10px;
             cursor: pointer;
+            display: none;
         }
 
-        .retry-btn:hover {
+        .button:hover {
             background-color: #3f3d56;
         }
 
@@ -63,20 +59,28 @@
             <option value="solo">Solo</option>
             <option value="multiplayer">Multiplayer</option>
         </select>
-        <button class="retry-btn" onclick="startGame()">Start Game</button>
     </div>
 
     <canvas id="snakeGame" width="600" height="400"></canvas>
+    <button class="button" id="playButton" onclick="startGame()">Play</button>
+    <button class="button" id="retryButton" onclick="restartGame()">Retry</button>
+
     <div class="score" id="score1">Player 1 Score: 0</div>
     <div class="score" id="score2" style="display: none;">Player 2 Score: 0</div>
-    <button class="retry-btn" onclick="restartGame()" style="display: none;">Retry</button>
 
     <audio id="foodSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
     <audio id="gameOverSound" src="https://www.soundjay.com/button/beep-10.mp3"></audio>
+    <audio id="backgroundMusic" src="https://my-anxiety-buddy.com/music/chamber-of-reflection.mp3" loop></audio>
 
     <script>
         const canvas = document.getElementById('snakeGame');
         const ctx = canvas.getContext('2d');
+        const playButton = document.getElementById('playButton');
+        const retryButton = document.getElementById('retryButton');
+        const foodSound = document.getElementById('foodSound');
+        const gameOverSound = document.getElementById('gameOverSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+
         const box = 20;
         let rows = canvas.width / box;
         let columns = canvas.height / box;
@@ -89,11 +93,10 @@
         let score1 = 0;
         let score2 = 0;
         let gameMode = "solo";
+        let game;
+
         const scoreDisplay1 = document.getElementById('score1');
         const scoreDisplay2 = document.getElementById('score2');
-        const retryButton = document.querySelector('.retry-btn');
-        const foodSound = document.getElementById('foodSound');
-        const gameOverSound = document.getElementById('gameOverSound');
 
         document.addEventListener('keydown', changeDirection);
 
@@ -124,13 +127,6 @@
             ctx.fillStyle = '#32cd32';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < columns; j++) {
-                    ctx.strokeStyle = '#ccc';
-                    ctx.strokeRect(i * box, j * box, box, box);
-                }
-            }
-
             drawSnake(snake1, '#6c63ff');
             if (gameMode === 'multiplayer') {
                 drawSnake(snake2, '#ff6347');
@@ -158,9 +154,11 @@
                 ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
                 if (i === 0) {
                     ctx.fillStyle = 'white';
+                    const eyeOffsetX = direction1 === 'LEFT' ? -2 : direction1 === 'RIGHT' ? 2 : 0;
+                    const eyeOffsetY = direction1 === 'UP' ? -2 : direction1 === 'DOWN' ? 2 : 0;
                     ctx.beginPath();
-                    ctx.arc(snake[i].x + 6, snake[i].y + 6, 3, 0, 2 * Math.PI);
-                    ctx.arc(snake[i].x + 14, snake[i].y + 6, 3, 0, 2 * Math.PI);
+                    ctx.arc(snake[i].x + 6 + eyeOffsetX, snake[i].y + 6 + eyeOffsetY, 3, 0, 2 * Math.PI);
+                    ctx.arc(snake[i].x + 14 + eyeOffsetX, snake[i].y + 6 + eyeOffsetY, 3, 0, 2 * Math.PI);
                     ctx.fill();
                 }
             }
@@ -204,19 +202,10 @@
                 collision(head, snake)
             ) {
                 gameOverSound.play();
-                triggerCollisionEffect();
                 clearInterval(game);
-                alert(`Game Over! Player ${player} loses.`);
+                endGame();
                 return;
             }
-        }
-
-        function triggerCollisionEffect() {
-            const originalColor = canvas.style.backgroundColor;
-            canvas.style.backgroundColor = "red";
-            setTimeout(() => {
-                canvas.style.backgroundColor = originalColor;
-            }, 200);
         }
 
         function collision(head, array) {
@@ -224,6 +213,21 @@
                 if (head.x === array[i].x && head.y === array[i].y) return true;
             }
             return false;
+        }
+
+        function startGame() {
+            playButton.style.display = 'none';
+            retryButton.style.display = 'none';
+            backgroundMusic.play();
+            gameMode = document.getElementById('mode').value;
+            scoreDisplay2.style.display = gameMode === 'multiplayer' ? 'block' : 'none';
+            game = setInterval(drawGame, 100);
+        }
+
+        function endGame() {
+            retryButton.style.display = 'block';
+            backgroundMusic.pause();
+            backgroundMusic.currentTime = 0;
         }
 
         function restartGame() {
@@ -239,15 +243,6 @@
             scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
             startGame();
         }
-
-        function startGame() {
-            gameMode = document.getElementById('mode').value;
-            scoreDisplay2.style.display = gameMode === 'multiplayer' ? 'block' : 'none';
-            retryButton.style.display = 'block';
-            game = setInterval(drawGame, 100);
-        }
-
-        let game;
     </script>
 </body>
 </html>
