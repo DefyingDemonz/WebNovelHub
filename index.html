@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Webnovel Website</title>
+    <title>My Webnovel Hub</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -34,9 +34,6 @@
             max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
         }
         .mode-switch {
             text-align: center;
@@ -56,31 +53,6 @@
         .mode-switch button:hover {
             background: #3f3d56;
         }
-        .upload-box {
-            text-align: center;
-            margin: 30px 0;
-        }
-        .upload-box input {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
-            font-size: 1rem;
-            margin-right: 10px;
-            width: 70%;
-        }
-        .upload-box button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 10px;
-            font-size: 1rem;
-            background: #6c63ff;
-            color: white;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .upload-box button:hover {
-            background: #3f3d56;
-        }
         .library {
             margin-top: 40px;
         }
@@ -90,33 +62,78 @@
             margin-bottom: 20px;
             color: #333;
         }
-        .novel-list {
-            list-style-type: none;
-            padding: 0;
-            margin: 0;
+        .novel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 20px;
         }
-        .novel-list li {
+        .novel-card {
             background-color: #ffffff;
-            margin: 10px 0;
-            padding: 15px;
             border-radius: 10px;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.2s;
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.3s;
         }
-        .novel-list li:hover {
-            transform: translateY(-3px);
+        .novel-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
         }
-        .novel-list li a {
-            text-decoration: none;
+        .novel-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+        }
+        .novel-card .card-content {
+            padding: 15px;
+            text-align: center;
+        }
+        .novel-card h3 {
+            margin: 0;
             font-size: 1.2rem;
             color: #6c63ff;
-            font-weight: bold;
         }
-        .novel-list li a:hover {
-            text-decoration: underline;
+        .comments-section, .rating-section {
+            margin-top: 20px;
+        }
+        .comments-section h3, .rating-section h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        .comments-section textarea {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .comments-section button, .rating-section button {
+            padding: 10px 15px;
+            background: #6c63ff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .comments-section button:hover, .rating-section button:hover {
+            background: #3f3d56;
+        }
+        .comments-list, .rating-display {
+            margin-top: 20px;
+        }
+        .comments-list p {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .rating-display p {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            color: #333;
         }
     </style>
 </head>
@@ -131,97 +148,114 @@
             <button onclick="setMode('dark')">Dark Mode</button>
             <button onclick="setMode('sepia')">Sepia Mode</button>
         </div>
-        <div class="upload-box" id="upload-box">
-            <h2>Add New Webnovel (PDF Only)</h2>
-            <input type="file" id="pdf-upload" accept="application/pdf">
-            <button onclick="uploadPDF()">Upload PDF</button>
-        </div>
         <div class="library">
             <h2>Your Library</h2>
-            <ul class="novel-list" id="novel-list">
-                <!-- Uploaded novels will appear here -->
-            </ul>
+            <div class="novel-grid" id="novel-grid">
+                <!-- Novel cards will appear here -->
+            </div>
+        </div>
+        <div class="comments-section" id="comments-section">
+            <h3>Comments</h3>
+            <textarea id="comment-input" placeholder="Write a comment..."></textarea>
+            <button onclick="addComment()">Post Comment</button>
+            <div class="comments-list" id="comments-list">
+                <!-- Comments will appear here -->
+            </div>
+        </div>
+        <div class="rating-section" id="rating-section">
+            <h3>Rate This Chapter</h3>
+            <div>
+                <button onclick="rateChapter(1)">1 Star</button>
+                <button onclick="rateChapter(2)">2 Stars</button>
+                <button onclick="rateChapter(3)">3 Stars</button>
+                <button onclick="rateChapter(4)">4 Stars</button>
+                <button onclick="rateChapter(5)">5 Stars</button>
+            </div>
+            <div class="rating-display" id="rating-display">
+                <p>Average Rating: <span id="average-rating">0</span></p>
+            </div>
         </div>
     </div>
     <script>
         const novels = JSON.parse(localStorage.getItem('novels')) || [];
-        const novelList = document.getElementById('novel-list');
-
-        function uploadPDF() {
-            const pdfInput = document.getElementById('pdf-upload');
-
-            if (pdfInput.files.length > 0) {
-                const file = pdfInput.files[0];
-                const fileName = file.name;
-
-                if (!fileName.endsWith('.pdf')) {
-                    alert('Only PDF files are allowed.');
-                    return;
-                }
-
-                const novel = { name: fileName, chapters: [] };
-                const reader = new FileReader();
-
-                reader.onload = function (event) {
-                    const fileContent = event.target.result;
-                    const pages = splitPDFIntoChapters(fileContent);
-                    novel.chapters = pages;
-                    novels.push(novel);
-                    localStorage.setItem('novels', JSON.stringify(novels));
-                    displayNovels();
-                };
-
-                reader.readAsDataURL(file);
-
-                alert('PDF uploaded successfully!');
-                pdfInput.value = ''; // Clear the input field
-            } else {
-                alert('Please select a PDF file to upload.');
-            }
-        }
-
-        function splitPDFIntoChapters(content) {
-            const dummyChapters = [
-                "Chapter 1: Introduction",
-                "Chapter 2: The Journey Begins",
-                "Chapter 3: The Climax",
-                "Chapter 4: The Resolution"
-            ];
-            return dummyChapters; // Replace this with real PDF parsing logic
-        }
+        const comments = JSON.parse(localStorage.getItem('comments')) || [];
+        const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
+        const novelGrid = document.getElementById('novel-grid');
+        const commentsList = document.getElementById('comments-list');
+        const ratingDisplay = document.getElementById('average-rating');
 
         function displayNovels() {
-            novelList.innerHTML = '';
+            novelGrid.innerHTML = '';
             novels.forEach((novel, index) => {
-                const listItem = document.createElement('li');
+                const card = document.createElement('div');
+                card.className = 'novel-card';
 
-                const link = document.createElement('a');
-                link.href = '#';
-                link.onclick = () => viewNovel(index);
-                link.textContent = novel.name;
+                const cover = document.createElement('img');
+                cover.src = novel.cover || 'https://via.placeholder.com/200x300?text=No+Cover';
+                cover.alt = `${novel.name} Cover`;
 
-                const deleteButton = document.createElement('button');
-                deleteButton.textContent = 'Delete';
-                deleteButton.onclick = () => deleteNovel(index);
+                const content = document.createElement('div');
+                content.className = 'card-content';
 
-                listItem.appendChild(link);
-                listItem.appendChild(deleteButton);
-                novelList.appendChild(listItem);
+                const title = document.createElement('h3');
+                title.textContent = novel.name;
+
+                const button = document.createElement('button');
+                button.textContent = 'View Chapters';
+                button.onclick = () => viewNovel(index);
+
+                content.appendChild(title);
+                content.appendChild(button);
+                card.appendChild(cover);
+                card.appendChild(content);
+
+                novelGrid.appendChild(card);
             });
         }
 
         function viewNovel(index) {
             const novel = novels[index];
-            alert(`Viewing ${novel.name}\nChapters:\n${novel.chapters.join('\n')}`);
+            alert(`Viewing ${novel.name}\nChapters:\n${(novel.chapters || []).join('\n')}`);
         }
 
-        function deleteNovel(index) {
-            novels.splice(index, 1);
-            localStorage.setItem('novels', JSON.stringify(novels));
-            displayNovels();
+        function displayComments() {
+            commentsList.innerHTML = '';
+            comments.forEach(comment => {
+                const commentItem = document.createElement('p');
+                commentItem.textContent = comment;
+                commentsList.appendChild(commentItem);
+            });
+        }
+
+        function addComment() {
+            const commentInput = document.getElementById('comment-input');
+            const commentText = commentInput.value.trim();
+            if (commentText) {
+                comments.push(commentText);
+                localStorage.setItem('comments', JSON.stringify(comments));
+                displayComments();
+                commentInput.value = '';
+            }
+        }
+
+        function rateChapter(rating) {
+            ratings.push(rating);
+            localStorage.setItem('ratings', JSON.stringify(ratings));
+            displayAverageRating();
+        }
+
+        function displayAverageRating() {
+            if (ratings.length === 0) {
+                ratingDisplay.textContent = '0';
+                return;
+            }
+            const average = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
+            ratingDisplay.textContent = average;
         }
 
         displayNovels();
+        displayComments();
+        displayAverageRating();
 
         function setMode(mode) {
             const body = document.body;
