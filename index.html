@@ -1,11 +1,33 @@
 
-<!DOCTYPE html>
+   <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Webnovel Hub</title>
     <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -13,6 +35,7 @@
             background-color: #f9f9f9;
             color: #333;
             transition: background-color 0.3s, color 0.3s;
+            animation: fadeIn 1s ease;
         }
         header {
             background: linear-gradient(135deg, #6c63ff, #3f3d56);
@@ -20,6 +43,7 @@
             padding: 20px;
             text-align: center;
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 1s ease;
         }
         header h1 {
             margin: 0;
@@ -34,6 +58,7 @@
             max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
+            animation: fadeIn 1s ease;
         }
         .mode-switch {
             text-align: center;
@@ -52,6 +77,23 @@
         }
         .mode-switch button:hover {
             background: #3f3d56;
+        }
+        .search-bar {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .search-bar input {
+            width: 80%;
+            max-width: 500px;
+            padding: 10px;
+            font-size: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .search-bar input:focus {
+            border-color: #6c63ff;
         }
         .library {
             margin-top: 40px;
@@ -74,6 +116,7 @@
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
             overflow: hidden;
             transition: transform 0.2s, box-shadow 0.3s;
+            animation: scaleIn 0.5s ease;
         }
         .novel-card:hover {
             transform: translateY(-5px);
@@ -95,6 +138,7 @@
         }
         .comments-section, .rating-section {
             margin-top: 20px;
+            animation: fadeIn 1s ease;
         }
         .comments-section h3, .rating-section h3 {
             font-size: 1.5rem;
@@ -148,6 +192,9 @@
             <button onclick="setMode('dark')">Dark Mode</button>
             <button onclick="setMode('sepia')">Sepia Mode</button>
         </div>
+        <div class="search-bar">
+            <input type="text" id="search-bar" placeholder="Search for a novel..." oninput="searchNovels()">
+        </div>
         <div class="library">
             <h2>Your Library</h2>
             <div class="novel-grid" id="novel-grid">
@@ -177,7 +224,17 @@
         </div>
     </div>
     <script>
-        const novels = JSON.parse(localStorage.getItem('novels')) || [];
+        const novels = [
+    { 
+        name: "Birth of the Demonic Sword", 
+        cover: "https://via.placeholder.com/200x300?text=Birth+of+the+Demonic+Sword", 
+        chapters: ["Chapter 1", "Chapter 2", "Chapter 3", "..."], 
+        status: "Completed" 
+    },
+    { name: "Novel 1", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1", "Chapter 2", "Chapter 3"] },
+    { name: "Novel 2", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1", "Chapter 2"] },
+    { name: "Novel 3", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1"] }
+];
         const comments = JSON.parse(localStorage.getItem('comments')) || [];
         const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
         const novelGrid = document.getElementById('novel-grid');
@@ -215,61 +272,41 @@
 
         function viewNovel(index) {
             const novel = novels[index];
-            alert(`Viewing ${novel.name}\nChapters:\n${(novel.chapters || []).join('\n')}`);
+            alert(`Viewing ${novel.name}\nChapters:\n${novel.chapters.join('\n')}`);
+        }
+
+        function searchNovels() {
+            const query = document.getElementById('search-bar').value.toLowerCase();
+            const filteredNovels = novels.filter(novel => novel.name.toLowerCase().includes(query));
+            novelGrid.innerHTML = '';
+            filteredNovels.forEach((novel, index) => {
+                const card = document.createElement('div');
+                card.className = 'novel-card';
+
+                const cover = document.createElement('img');
+                cover.src = novel.cover || 'https://via.placeholder.com/200x300?text=No+Cover';
+                cover.alt = `${novel.name} Cover`;
+
+                const content = document.createElement('div');
+                content.className = 'card-content';
+
+                const title = document.createElement('h3');
+                title.textContent = novel.name;
+
+                const button = document.createElement('button');
+                button.textContent = 'View Chapters';
+                button.onclick = () => viewNovel(index);
+
+                content.appendChild(title);
+                content.appendChild(button);
+                card.appendChild(cover);
+                card.appendChild(content);
+
+                novelGrid.appendChild(card);
+            });
         }
 
         function displayComments() {
             commentsList.innerHTML = '';
             comments.forEach(comment => {
-                const commentItem = document.createElement('p');
-                commentItem.textContent = comment;
-                commentsList.appendChild(commentItem);
-            });
-        }
-
-        function addComment() {
-            const commentInput = document.getElementById('comment-input');
-            const commentText = commentInput.value.trim();
-            if (commentText) {
-                comments.push(commentText);
-                localStorage.setItem('comments', JSON.stringify(comments));
-                displayComments();
-                commentInput.value = '';
-            }
-        }
-
-        function rateChapter(rating) {
-            ratings.push(rating);
-            localStorage.setItem('ratings', JSON.stringify(ratings));
-            displayAverageRating();
-        }
-
-        function displayAverageRating() {
-            if (ratings.length === 0) {
-                ratingDisplay.textContent = '0';
-                return;
-            }
-            const average = (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1);
-            ratingDisplay.textContent = average;
-        }
-
-        displayNovels();
-        displayComments();
-        displayAverageRating();
-
-        function setMode(mode) {
-            const body = document.body;
-            if (mode === 'light') {
-                body.style.backgroundColor = '#f9f9f9';
-                body.style.color = '#333';
-            } else if (mode === 'dark') {
-                body.style.backgroundColor = '#121212';
-                body.style.color = '#ffffff';
-            } else if (mode === 'sepia') {
-                body.style.backgroundColor = '#f5e8c7';
-                body.style.color = '#5b4636';
-            }
-        }
-    </script>
-</body>
-</html>
+                const commentItem =
