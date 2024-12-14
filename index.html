@@ -58,42 +58,42 @@
 <body>
     <h1>Customizable Snake Game</h1>
     <div class="controls">
-        <label for="speed">Speed:</label>
-        <select id="speed">
-            <option value="200">Slow</option>
-            <option value="100" selected>Normal</option>
-            <option value="50">Fast</option>
+        <label for="mode">Game Mode:</label>
+        <select id="mode">
+            <option value="solo">Solo</option>
+            <option value="multiplayer">Multiplayer</option>
         </select>
-
-        <label for="snakeColor">Snake Color:</label>
-        <input type="color" id="snakeColor" value="#6c63ff">
-
-        <label for="foodColor">Food Color:</label>
-        <input type="color" id="foodColor" value="#ff0000">
-
-        <button class="retry-btn" onclick="applySettings()">Apply Settings</button>
+        <button class="retry-btn" onclick="startGame()">Start Game</button>
     </div>
 
-    <canvas id="snakeGame" width="400" height="400"></canvas>
-    <div class="score" id="score">Score: 0</div>
-    <button class="retry-btn" onclick="restartGame()">Retry</button>
+    <canvas id="snakeGame" width="600" height="400"></canvas>
+    <div class="score" id="score1">Player 1 Score: 0</div>
+    <div class="score" id="score2" style="display: none;">Player 2 Score: 0</div>
+    <button class="retry-btn" onclick="restartGame()" style="display: none;">Retry</button>
+
+    <audio id="foodSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
+    <audio id="gameOverSound" src="https://www.soundjay.com/button/beep-10.mp3"></audio>
 
     <script>
         const canvas = document.getElementById('snakeGame');
         const ctx = canvas.getContext('2d');
-        const scoreDisplay = document.getElementById('score');
-
-        let box = 20;
+        const box = 20;
         let rows = canvas.width / box;
         let columns = canvas.height / box;
-        let snake = [{ x: 10 * box, y: 10 * box }];
+
+        let snake1 = [{ x: 10 * box, y: 10 * box }];
+        let snake2 = [{ x: 15 * box, y: 15 * box }];
         let food = randomFood();
-        let direction;
-        let score = 0;
-        let gameSpeed = 100;
-        let snakeColor = '#6c63ff';
-        let foodColor = '#ff0000';
-        let game;
+        let direction1;
+        let direction2;
+        let score1 = 0;
+        let score2 = 0;
+        let gameMode = "solo";
+        const scoreDisplay1 = document.getElementById('score1');
+        const scoreDisplay2 = document.getElementById('score2');
+        const retryButton = document.querySelector('.retry-btn');
+        const foodSound = document.getElementById('foodSound');
+        const gameOverSound = document.getElementById('gameOverSound');
 
         document.addEventListener('keydown', changeDirection);
 
@@ -105,26 +105,68 @@
         }
 
         function changeDirection(event) {
-            if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
-            else if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
-            else if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
-            else if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
+            if (gameMode === 'solo' || gameMode === 'multiplayer') {
+                if (event.key === 'ArrowUp' && direction1 !== 'DOWN') direction1 = 'UP';
+                else if (event.key === 'ArrowDown' && direction1 !== 'UP') direction1 = 'DOWN';
+                else if (event.key === 'ArrowLeft' && direction1 !== 'RIGHT') direction1 = 'LEFT';
+                else if (event.key === 'ArrowRight' && direction1 !== 'LEFT') direction1 = 'RIGHT';
+            }
+
+            if (gameMode === 'multiplayer') {
+                if (event.key === 'w' && direction2 !== 'DOWN') direction2 = 'UP';
+                else if (event.key === 's' && direction2 !== 'UP') direction2 = 'DOWN';
+                else if (event.key === 'a' && direction2 !== 'RIGHT') direction2 = 'LEFT';
+                else if (event.key === 'd' && direction2 !== 'LEFT') direction2 = 'RIGHT';
+            }
         }
 
         function drawGame() {
             ctx.fillStyle = '#32cd32';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-            for (let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = i === 0 ? snakeColor : '#555';
-                ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < columns; j++) {
+                    ctx.strokeStyle = '#ccc';
+                    ctx.strokeRect(i * box, j * box, box, box);
+                }
             }
 
-            ctx.fillStyle = foodColor;
+            drawSnake(snake1, '#6c63ff');
+            if (gameMode === 'multiplayer') {
+                drawSnake(snake2, '#ff6347');
+            }
+
+            ctx.fillStyle = 'red';
             ctx.beginPath();
             ctx.arc(food.x + box / 2, food.y + box / 2, box / 2.5, 0, 2 * Math.PI);
             ctx.fill();
 
+            moveSnake(snake1, direction1);
+            if (gameMode === 'multiplayer') {
+                moveSnake(snake2, direction2);
+            }
+
+            checkCollision(snake1, 1);
+            if (gameMode === 'multiplayer') {
+                checkCollision(snake2, 2);
+            }
+        }
+
+        function drawSnake(snake, color) {
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? color : '#555';
+                ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
+                if (i === 0) {
+                    ctx.fillStyle = 'white';
+                    ctx.beginPath();
+                    ctx.arc(snake[i].x + 6, snake[i].y + 6, 3, 0, 2 * Math.PI);
+                    ctx.arc(snake[i].x + 14, snake[i].y + 6, 3, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+        }
+
+        function moveSnake(snake, direction) {
             let snakeX = snake[0].x;
             let snakeY = snake[0].y;
 
@@ -134,32 +176,51 @@
             if (direction === 'RIGHT') snakeX += box;
 
             if (snakeX === food.x && snakeY === food.y) {
-                score++;
-                scoreDisplay.textContent = `Score: ${score}`;
+                foodSound.play();
+                if (snake === snake1) {
+                    score1++;
+                    scoreDisplay1.textContent = `Player 1 Score: ${score1}`;
+                } else {
+                    score2++;
+                    scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
+                }
                 food = randomFood();
             } else {
                 snake.pop();
             }
 
             const newHead = { x: snakeX, y: snakeY };
-
-            if (
-                snakeX < 0 ||
-                snakeY < 0 ||
-                snakeX >= canvas.width ||
-                snakeY >= canvas.height ||
-                collision(newHead, snake)
-            ) {
-                clearInterval(game);
-                alert(`Game Over! Your score: ${score}`);
-                return;
-            }
-
             snake.unshift(newHead);
         }
 
+        function checkCollision(snake, player) {
+            const head = snake[0];
+
+            if (
+                head.x < 0 ||
+                head.y < 0 ||
+                head.x >= canvas.width ||
+                head.y >= canvas.height ||
+                collision(head, snake)
+            ) {
+                gameOverSound.play();
+                triggerCollisionEffect();
+                clearInterval(game);
+                alert(`Game Over! Player ${player} loses.`);
+                return;
+            }
+        }
+
+        function triggerCollisionEffect() {
+            const originalColor = canvas.style.backgroundColor;
+            canvas.style.backgroundColor = "red";
+            setTimeout(() => {
+                canvas.style.backgroundColor = originalColor;
+            }, 200);
+        }
+
         function collision(head, array) {
-            for (let i = 0; i < array.length; i++) {
+            for (let i = 1; i < array.length; i++) {
                 if (head.x === array[i].x && head.y === array[i].y) return true;
             }
             return false;
@@ -167,23 +228,26 @@
 
         function restartGame() {
             clearInterval(game);
-            snake = [{ x: 10 * box, y: 10 * box }];
+            snake1 = [{ x: 10 * box, y: 10 * box }];
+            snake2 = [{ x: 15 * box, y: 15 * box }];
             food = randomFood();
-            direction = null;
-            score = 0;
-            scoreDisplay.textContent = `Score: ${score}`;
-            game = setInterval(drawGame, gameSpeed);
+            direction1 = null;
+            direction2 = null;
+            score1 = 0;
+            score2 = 0;
+            scoreDisplay1.textContent = `Player 1 Score: ${score1}`;
+            scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
+            startGame();
         }
 
-        function applySettings() {
-            clearInterval(game);
-            gameSpeed = parseInt(document.getElementById('speed').value);
-            snakeColor = document.getElementById('snakeColor').value;
-            foodColor = document.getElementById('foodColor').value;
-            restartGame();
+        function startGame() {
+            gameMode = document.getElementById('mode').value;
+            scoreDisplay2.style.display = gameMode === 'multiplayer' ? 'block' : 'none';
+            retryButton.style.display = 'block';
+            game = setInterval(drawGame, 100);
         }
 
-        game = setInterval(drawGame, gameSpeed);
+        let game;
     </script>
 </body>
 </html>
