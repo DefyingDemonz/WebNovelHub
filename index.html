@@ -3,271 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customizable Snake Game</title>
+    <title>First Person Shooter - Shop System</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
-            text-align: center;
-            background-color: #f9f9f9;
+            background: #111;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         canvas {
-            background-color: #32cd32;
-            margin: 20px auto;
             display: block;
-            border: 2px solid #000;
-            border-radius: 10px;
-            position: relative;
+            margin: 0 auto;
         }
 
-        .controls {
-            margin: 20px 0;
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            z-index: 1000;
         }
 
         .button {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background-color: #6c63ff;
             color: white;
-            font-size: 2rem;
-            padding: 15px 30px;
+            font-size: 1rem;
+            padding: 10px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: 5px;
             cursor: pointer;
-            display: none;
+            margin-top: 20px;
         }
 
         .button:hover {
             background-color: #3f3d56;
         }
 
-        .music-button {
-            margin: 20px auto;
-            display: block;
-            padding: 10px 20px;
-            font-size: 1.2rem;
-            color: white;
-            background-color: #6c63ff;
-            border: none;
+        #shop-ui {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #222;
+            padding: 20px;
             border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+
+        .shop-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #444;
+            border-radius: 5px;
+        }
+
+        .shop-item button {
+            background-color: #6c63ff;
+            color: white;
+            font-size: 1rem;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 5px;
             cursor: pointer;
         }
 
-        .music-button:hover {
+        .shop-item button:hover {
             background-color: #3f3d56;
-        }
-
-        .score {
-            font-size: 1.5rem;
-            color: #333;
         }
     </style>
 </head>
 <body>
-    <h1>Customizable Snake Game</h1>
-    <div class="controls">
-        <label for="mode">Game Mode:</label>
-        <select id="mode">
-            <option value="solo">Solo</option>
-            <option value="multiplayer">Multiplayer</option>
-        </select>
-        <button class="music-button" onclick="toggleMusic()">Toggle Music</button>
+    <div id="ui">
+        <div id="score-ui">Score: <span id="score">0</span></div>
+        <button class="button" id="openShopButton">Open Shop</button>
     </div>
 
-    <canvas id="snakeGame" width="600" height="400"></canvas>
-    <button class="button" id="playButton" onclick="startGame()">Play</button>
-    <button class="button" id="retryButton" onclick="restartGame()">Retry</button>
+    <div id="shop-ui">
+        <h2>Shop</h2>
+        <div class="shop-item" data-cost="5" data-color="red">
+            <span>Red Gun Wrap - 5 Points</span>
+            <button onclick="buyWrap(this)">Buy</button>
+        </div>
+        <div class="shop-item" data-cost="10" data-color="green">
+            <span>Green Gun Wrap - 10 Points</span>
+            <button onclick="buyWrap(this)">Buy</button>
+        </div>
+        <div class="shop-item" data-cost="15" data-color="gold">
+            <span>Gold Gun Wrap - 15 Points</span>
+            <button onclick="buyWrap(this)">Buy</button>
+        </div>
+        <button class="button" onclick="closeShop()">Close Shop</button>
+    </div>
 
-    <div class="score" id="score1">Player 1 Score: 0</div>
-    <div class="score" id="score2" style="display: none;">Player 2 Score: 0</div>
-
-    <audio id="foodSound" src="https://www.soundjay.com/button/beep-07.mp3"></audio>
-    <audio id="gameOverSound" src="https://www.soundjay.com/button/beep-10.mp3"></audio>
-    <audio id="backgroundMusic" src="https://my-anxiety-buddy.com/music/chamber-of-reflection.mp3" loop></audio>
+    <canvas id="fpsCanvas"></canvas>
 
     <script>
-        const canvas = document.getElementById('snakeGame');
+        const canvas = document.getElementById('fpsCanvas');
         const ctx = canvas.getContext('2d');
-        const playButton = document.getElementById('playButton');
-        const retryButton = document.getElementById('retryButton');
-        const foodSound = document.getElementById('foodSound');
-        const gameOverSound = document.getElementById('gameOverSound');
-        const backgroundMusic = document.getElementById('backgroundMusic');
+        const scoreDisplay = document.getElementById('score');
+        const openShopButton = document.getElementById('openShopButton');
+        const shopUI = document.getElementById('shop-ui');
 
-        const box = 20;
-        let rows = canvas.width / box;
-        let columns = canvas.height / box;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
 
-        let snake1 = [{ x: 10 * box, y: 10 * box }];
-        let snake2 = [{ x: 15 * box, y: 15 * box }];
-        let food = randomFood();
-        let direction1;
-        let direction2;
-        let score1 = 0;
-        let score2 = 0;
-        let gameMode = "solo";
-        let game;
-        let isMusicPlaying = false;
+        let player = {
+            x: canvas.width / 2,
+            y: canvas.height - 50,
+            width: 20,
+            height: 20,
+            color: 'blue',
+            speed: 5,
+            wrap: 'blue'
+        };
 
-        const scoreDisplay1 = document.getElementById('score1');
-        const scoreDisplay2 = document.getElementById('score2');
+        let bullets = [];
+        let enemies = [];
+        let score = 0;
+        let gameInterval;
 
-        document.addEventListener('keydown', changeDirection);
-
-        function randomFood() {
-            return {
-                x: Math.floor(Math.random() * rows) * box,
-                y: Math.floor(Math.random() * columns) * box
-            };
+        function drawPlayer() {
+            ctx.fillStyle = player.wrap;
+            ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
-        function changeDirection(event) {
-            if (gameMode === 'solo' || gameMode === 'multiplayer') {
-                if (event.key === 'ArrowUp' && direction1 !== 'DOWN') direction1 = 'UP';
-                else if (event.key === 'ArrowDown' && direction1 !== 'UP') direction1 = 'DOWN';
-                else if (event.key === 'ArrowLeft' && direction1 !== 'RIGHT') direction1 = 'LEFT';
-                else if (event.key === 'ArrowRight' && direction1 !== 'LEFT') direction1 = 'RIGHT';
-            }
+        function openShop() {
+            shopUI.style.display = 'block';
+        }
 
-            if (gameMode === 'multiplayer') {
-                if (event.key === 'w' && direction2 !== 'DOWN') direction2 = 'UP';
-                else if (event.key === 's' && direction2 !== 'UP') direction2 = 'DOWN';
-                else if (event.key === 'a' && direction2 !== 'RIGHT') direction2 = 'LEFT';
-                else if (event.key === 'd' && direction2 !== 'LEFT') direction2 = 'RIGHT';
+        function closeShop() {
+            shopUI.style.display = 'none';
+        }
+
+        function buyWrap(button) {
+            const item = button.parentElement;
+            const cost = parseInt(item.getAttribute('data-cost'));
+            const color = item.getAttribute('data-color');
+
+            if (score >= cost) {
+                score -= cost;
+                scoreDisplay.textContent = score;
+                player.wrap = color;
+                alert(`Purchased ${color} Gun Wrap!`);
+            } else {
+                alert('Not enough points!');
             }
         }
 
-        function drawGame() {
-            ctx.fillStyle = '#32cd32';
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
+        function drawBullets() {
+            ctx.fillStyle = 'yellow';
+            bullets.forEach((bullet, index) => {
+                bullet.y -= bullet.speed;
+                ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                if (bullet.y < 0) bullets.splice(index, 1);
+            });
+        }
 
-            drawSnake(snake1, '#6c63ff');
-            if (gameMode === 'multiplayer') {
-                drawSnake(snake2, '#ff6347');
-            }
-
+        function drawEnemies() {
             ctx.fillStyle = 'red';
-            ctx.beginPath();
-            ctx.arc(food.x + box / 2, food.y + box / 2, box / 2.5, 0, 2 * Math.PI);
-            ctx.fill();
+            enemies.forEach((enemy, index) => {
+                enemy.y += enemy.speed;
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
 
-            moveSnake(snake1, direction1);
-            if (gameMode === 'multiplayer') {
-                moveSnake(snake2, direction2);
-            }
-
-            checkCollision(snake1, 1);
-            if (gameMode === 'multiplayer') {
-                checkCollision(snake2, 2);
-            }
-        }
-
-        function drawSnake(snake, color) {
-            for (let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = i === 0 ? color : '#555';
-                ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
-                if (i === 0) {
-                    ctx.fillStyle = 'white';
-                    const eyeOffsetX = direction1 === 'LEFT' ? -2 : direction1 === 'RIGHT' ? 2 : 0;
-                    const eyeOffsetY = direction1 === 'UP' ? -2 : direction1 === 'DOWN' ? 2 : 0;
-                    ctx.beginPath();
-                    ctx.arc(snake[i].x + 6 + eyeOffsetX, snake[i].y + 6 + eyeOffsetY, 3, 0, 2 * Math.PI);
-                    ctx.arc(snake[i].x + 14 + eyeOffsetX, snake[i].y + 6 + eyeOffsetY, 3, 0, 2 * Math.PI);
-                    ctx.fill();
+                if (enemy.y > canvas.height) {
+                    enemies.splice(index, 1);
                 }
-            }
+
+                bullets.forEach((bullet, bIndex) => {
+                    if (
+                        bullet.x < enemy.x + enemy.width &&
+                        bullet.x + bullet.width > enemy.x &&
+                        bullet.y < enemy.y + enemy.height &&
+                        bullet.height + bullet.y > enemy.y
+                    ) {
+                        enemies.splice(index, 1);
+                        bullets.splice(bIndex, 1);
+                        score++;
+                        scoreDisplay.textContent = score;
+                    }
+                });
+            });
         }
 
-        function moveSnake(snake, direction) {
-            let snakeX = snake[0].x;
-            let snakeY = snake[0].y;
-
-            if (direction === 'UP') snakeY -= box;
-            if (direction === 'DOWN') snakeY += box;
-            if (direction === 'LEFT') snakeX -= box;
-            if (direction === 'RIGHT') snakeX += box;
-
-            if (snakeX === food.x && snakeY === food.y) {
-                foodSound.play();
-                if (snake === snake1) {
-                    score1++;
-                    scoreDisplay1.textContent = `Player 1 Score: ${score1}`;
-                } else {
-                    score2++;
-                    scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
-                }
-                food = randomFood();
-            } else {
-                snake.pop();
-            }
-
-            const newHead = { x: snakeX, y: snakeY };
-            snake.unshift(newHead);
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawBullets();
+            drawEnemies();
         }
 
-        function checkCollision(snake, player) {
-            const head = snake[0];
+        openShopButton.addEventListener('click', openShop);
 
-            if (
-                head.x < 0 ||
-                head.y < 0 ||
-                head.x >= canvas.width ||
-                head.y >= canvas.height ||
-                collision(head, snake)
-            ) {
-                gameOverSound.play();
-                clearInterval(game);
-                endGame();
-                return;
-            }
-        }
+        window.addEventListener('mousemove', (e) => {
+            player.x = e.clientX - player.width / 2;
+        });
 
-        function collision(head, array) {
-            for (let i = 1; i < array.length; i++) {
-                if (head.x === array[i].x && head.y === array[i].y) return true;
-            }
-            return false;
-        }
+        window.addEventListener('click', () => {
+            bullets.push({
+                x: player.x + player.width / 2 - 2.5,
+                y: player.y,
+                width: 5,
+                height: 10,
+                speed: 5
+            });
+        });
 
-        function startGame() {
-            playButton.style.display = 'none';
-            retryButton.style.display = 'none';
-            gameMode = document.getElementById('mode').value;
-            scoreDisplay2.style.display = gameMode === 'multiplayer' ? 'block' : 'none';
-            game = setInterval(drawGame, 100);
-        }
-
-        function endGame() {
-            retryButton.style.display = 'block';
-        }
-
-        function restartGame() {
-            clearInterval(game);
-            snake1 = [{ x: 10 * box, y: 10 * box }];
-            snake2 = [{ x: 15 * box, y: 15 * box }];
-            food = randomFood();
-            direction1 = null;
-            direction2 = null;
-            score1 = 0;
-            score2 = 0;
-            scoreDisplay1.textContent = `Player 1 Score: ${score1}`;
-            scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
-            startGame();
-        }
-
-        function toggleMusic() {
-            if (isMusicPlaying) {
-                backgroundMusic.pause();
-                isMusicPlaying = false;
-            } else {
-                backgroundMusic.play();
-                isMusicPlaying = true;
-            }
-        }
+        gameInterval = setInterval(gameLoop, 16);
     </script>
 </body>
 </html>
