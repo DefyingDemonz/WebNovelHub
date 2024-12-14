@@ -309,4 +309,76 @@
                 ) {
                     let damage = enemy.damage;
 
-                    if (player.shield
+                    if (player.shield > 0) {
+                        player.shield -= damage;
+                        shieldDisplay.textContent = player.shield;
+                    } else if (player.armor > 0) {
+                        player.armor -= damage;
+                        armorDisplay.textContent = player.armor;
+                    } else {
+                        player.health -= damage;
+                        healthDisplay.textContent = player.health;
+                    }
+
+                    if (player.health <= 0) {
+                        endGame();
+                    }
+                }
+            });
+        }
+
+        function spawnEnemies() {
+            if (Math.random() < 0.02) {
+                const enemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+                const newEnemy = {
+                    ...enemyType,
+                    x: Math.random() * (canvas.width - enemyType.width),
+                    y: -enemyType.height,
+                    direction: Math.random() < 0.5 ? -1 : 1
+                };
+
+                enemies.push(newEnemy);
+            }
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawPlayer();
+            drawBullets();
+            drawEnemies();
+            spawnEnemies();
+        }
+
+        function startGame() {
+            startScreen.style.display = 'none';
+            ui.style.display = 'block';
+            canvas.style.display = 'block';
+            gameInterval = setInterval(gameLoop, 16);
+        }
+
+        function endGame() {
+            clearInterval(gameInterval);
+            alert('Game Over!');
+            location.reload();
+        }
+
+        window.addEventListener('mousemove', (e) => {
+            player.x = e.clientX - player.width / 2;
+        });
+
+        window.addEventListener('click', () => {
+            const bullet = {
+                x: player.x + player.width / 2 - 2.5,
+                y: player.y,
+                width: 5,
+                height: 10,
+                speed: 10,
+                color: 'white'
+            };
+            bullets.push(bullet);
+        });
+
+    </script>
+</body>
+</html>
+
