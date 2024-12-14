@@ -1,5 +1,4 @@
-
-   <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -60,6 +59,12 @@
             padding: 20px;
             animation: fadeIn 1s ease;
         }
+        canvas {
+            display: block;
+            margin: 20px auto;
+            background-color: #000;
+            border: 2px solid #6c63ff;
+        }
         .mode-switch {
             text-align: center;
             margin-bottom: 20px;
@@ -78,107 +83,6 @@
         .mode-switch button:hover {
             background: #3f3d56;
         }
-        .search-bar {
-            text-align: center;
-            margin: 20px 0;
-        }
-        .search-bar input {
-            width: 80%;
-            max-width: 500px;
-            padding: 10px;
-            font-size: 1rem;
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            outline: none;
-            transition: border-color 0.3s;
-        }
-        .search-bar input:focus {
-            border-color: #6c63ff;
-        }
-        .library {
-            margin-top: 40px;
-        }
-        .library h2 {
-            text-align: center;
-            font-size: 1.8rem;
-            margin-bottom: 20px;
-            color: #333;
-        }
-        .novel-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 20px;
-        }
-        .novel-card {
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: transform 0.2s, box-shadow 0.3s;
-            animation: scaleIn 0.5s ease;
-        }
-        .novel-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.2);
-        }
-        .novel-card img {
-            width: 100%;
-            height: 200px;
-            object-fit: cover;
-        }
-        .novel-card .card-content {
-            padding: 15px;
-            text-align: center;
-        }
-        .novel-card h3 {
-            margin: 0;
-            font-size: 1.2rem;
-            color: #6c63ff;
-        }
-        .comments-section, .rating-section {
-            margin-top: 20px;
-            animation: fadeIn 1s ease;
-        }
-        .comments-section h3, .rating-section h3 {
-            font-size: 1.5rem;
-            margin-bottom: 10px;
-        }
-        .comments-section textarea {
-            width: 100%;
-            padding: 10px;
-            font-size: 1rem;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        .comments-section button, .rating-section button {
-            padding: 10px 15px;
-            background: #6c63ff;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-        .comments-section button:hover, .rating-section button:hover {
-            background: #3f3d56;
-        }
-        .comments-list, .rating-display {
-            margin-top: 20px;
-        }
-        .comments-list p {
-            background: #f4f4f4;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-        }
-        .rating-display p {
-            font-size: 1.2rem;
-            margin-bottom: 10px;
-            color: #333;
-        }
     </style>
 </head>
 <body>
@@ -192,121 +96,88 @@
             <button onclick="setMode('dark')">Dark Mode</button>
             <button onclick="setMode('sepia')">Sepia Mode</button>
         </div>
-        <div class="search-bar">
-            <input type="text" id="search-bar" placeholder="Search for a novel..." oninput="searchNovels()">
-        </div>
-        <div class="library">
-            <h2>Your Library</h2>
-            <div class="novel-grid" id="novel-grid">
-                <!-- Novel cards will appear here -->
-            </div>
-        </div>
-        <div class="comments-section" id="comments-section">
-            <h3>Comments</h3>
-            <textarea id="comment-input" placeholder="Write a comment..."></textarea>
-            <button onclick="addComment()">Post Comment</button>
-            <div class="comments-list" id="comments-list">
-                <!-- Comments will appear here -->
-            </div>
-        </div>
-        <div class="rating-section" id="rating-section">
-            <h3>Rate This Chapter</h3>
-            <div>
-                <button onclick="rateChapter(1)">1 Star</button>
-                <button onclick="rateChapter(2)">2 Stars</button>
-                <button onclick="rateChapter(3)">3 Stars</button>
-                <button onclick="rateChapter(4)">4 Stars</button>
-                <button onclick="rateChapter(5)">5 Stars</button>
-            </div>
-            <div class="rating-display" id="rating-display">
-                <p>Average Rating: <span id="average-rating">0</span></p>
-            </div>
-        </div>
+        <canvas id="snakeGame" width="400" height="400"></canvas>
     </div>
     <script>
-        const novels = [
-    { 
-        name: "Birth of the Demonic Sword", 
-        cover: "https://via.placeholder.com/200x300?text=Birth+of+the+Demonic+Sword", 
-        chapters: ["Chapter 1", "Chapter 2", "Chapter 3", "..."], 
-        status: "Completed" 
-    },
-    { name: "Novel 1", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1", "Chapter 2", "Chapter 3"] },
-    { name: "Novel 2", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1", "Chapter 2"] },
-    { name: "Novel 3", cover: "https://via.placeholder.com/200x300", chapters: ["Chapter 1"] }
-];
-        const comments = JSON.parse(localStorage.getItem('comments')) || [];
-        const ratings = JSON.parse(localStorage.getItem('ratings')) || [];
-        const novelGrid = document.getElementById('novel-grid');
-        const commentsList = document.getElementById('comments-list');
-        const ratingDisplay = document.getElementById('average-rating');
+        const canvas = document.getElementById('snakeGame');
+        const ctx = canvas.getContext('2d');
+        const box = 20;
+        const rows = canvas.width / box;
+        const columns = canvas.height / box;
+        let snake = [{ x: 10 * box, y: 10 * box }];
+        let food = {
+            x: Math.floor(Math.random() * rows) * box,
+            y: Math.floor(Math.random() * columns) * box
+        };
+        let direction;
+        let score = 0;
 
-        function displayNovels() {
-            novelGrid.innerHTML = '';
-            novels.forEach((novel, index) => {
-                const card = document.createElement('div');
-                card.className = 'novel-card';
+        document.addEventListener('keydown', changeDirection);
 
-                const cover = document.createElement('img');
-                cover.src = novel.cover || 'https://via.placeholder.com/200x300?text=No+Cover';
-                cover.alt = `${novel.name} Cover`;
-
-                const content = document.createElement('div');
-                content.className = 'card-content';
-
-                const title = document.createElement('h3');
-                title.textContent = novel.name;
-
-                const button = document.createElement('button');
-                button.textContent = 'View Chapters';
-                button.onclick = () => viewNovel(index);
-
-                content.appendChild(title);
-                content.appendChild(button);
-                card.appendChild(cover);
-                card.appendChild(content);
-
-                novelGrid.appendChild(card);
-            });
+        function changeDirection(event) {
+            if (event.key === 'ArrowUp' && direction !== 'DOWN') direction = 'UP';
+            else if (event.key === 'ArrowDown' && direction !== 'UP') direction = 'DOWN';
+            else if (event.key === 'ArrowLeft' && direction !== 'RIGHT') direction = 'LEFT';
+            else if (event.key === 'ArrowRight' && direction !== 'LEFT') direction = 'RIGHT';
         }
 
-        function viewNovel(index) {
-            const novel = novels[index];
-            alert(`Viewing ${novel.name}\nChapters:\n${novel.chapters.join('\n')}`);
+        function drawGame() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = 0; i < snake.length; i++) {
+                ctx.fillStyle = i === 0 ? '#6c63ff' : '#3f3d56';
+                ctx.fillRect(snake[i].x, snake[i].y, box, box);
+                ctx.strokeStyle = '#000';
+                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+            }
+
+            ctx.fillStyle = 'red';
+            ctx.fillRect(food.x, food.y, box, box);
+
+            let snakeX = snake[0].x;
+            let snakeY = snake[0].y;
+
+            if (direction === 'UP') snakeY -= box;
+            if (direction === 'DOWN') snakeY += box;
+            if (direction === 'LEFT') snakeX -= box;
+            if (direction === 'RIGHT') snakeX += box;
+
+            if (snakeX === food.x && snakeY === food.y) {
+                score++;
+                food = {
+                    x: Math.floor(Math.random() * rows) * box,
+                    y: Math.floor(Math.random() * columns) * box
+                };
+            } else {
+                snake.pop();
+            }
+
+            const newHead = { x: snakeX, y: snakeY };
+
+            if (
+                snakeX < 0 ||
+                snakeY < 0 ||
+                snakeX >= canvas.width ||
+                snakeY >= canvas.height ||
+                collision(newHead, snake)
+            ) {
+                clearInterval(game);
+                alert(`Game Over! Your score: ${score}`);
+                return;
+            }
+
+            snake.unshift(newHead);
         }
 
-        function searchNovels() {
-            const query = document.getElementById('search-bar').value.toLowerCase();
-            const filteredNovels = novels.filter(novel => novel.name.toLowerCase().includes(query));
-            novelGrid.innerHTML = '';
-            filteredNovels.forEach((novel, index) => {
-                const card = document.createElement('div');
-                card.className = 'novel-card';
-
-                const cover = document.createElement('img');
-                cover.src = novel.cover || 'https://via.placeholder.com/200x300?text=No+Cover';
-                cover.alt = `${novel.name} Cover`;
-
-                const content = document.createElement('div');
-                content.className = 'card-content';
-
-                const title = document.createElement('h3');
-                title.textContent = novel.name;
-
-                const button = document.createElement('button');
-                button.textContent = 'View Chapters';
-                button.onclick = () => viewNovel(index);
-
-                content.appendChild(title);
-                content.appendChild(button);
-                card.appendChild(cover);
-                card.appendChild(content);
-
-                novelGrid.appendChild(card);
-            });
+        function collision(head, array) {
+            for (let i = 0; i < array.length; i++) {
+                if (head.x === array[i].x && head.y === array[i].y) return true;
+            }
+            return false;
         }
 
-        function displayComments() {
-            commentsList.innerHTML = '';
-            comments.forEach(comment => {
-                const commentItem =
+        const game = setInterval(drawGame, 100);
+    </script>
+</body>
+</html>
