@@ -81,7 +81,16 @@
         .upload-box button:hover {
             background: #3f3d56;
         }
-        .novel-list, .bookmarked-list {
+        .library {
+            margin-top: 40px;
+        }
+        .library h2 {
+            text-align: center;
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .novel-list {
             list-style-type: none;
             padding: 0;
             margin: 0;
@@ -114,7 +123,7 @@
 <body>
     <header>
         <h1>Welcome to My Webnovel Hub</h1>
-        <p>Discover your next adventure</p>
+        <p>Your personalized library of stories</p>
     </header>
     <div class="container">
         <div class="mode-switch">
@@ -127,9 +136,12 @@
             <input type="file" id="pdf-upload" accept="application/pdf">
             <button onclick="uploadPDF()">Upload PDF</button>
         </div>
-        <ul class="novel-list" id="novel-list">
-            <!-- Uploaded novels will appear here -->
-        </ul>
+        <div class="library">
+            <h2>Your Library</h2>
+            <ul class="novel-list" id="novel-list">
+                <!-- Uploaded novels will appear here -->
+            </ul>
+        </div>
     </div>
     <script>
         const novels = JSON.parse(localStorage.getItem('novels')) || [];
@@ -147,9 +159,19 @@
                     return;
                 }
 
-                novels.push({ name: fileName, url: URL.createObjectURL(file) });
-                localStorage.setItem('novels', JSON.stringify(novels));
-                displayNovels();
+                const novel = { name: fileName, chapters: [] };
+                const reader = new FileReader();
+
+                reader.onload = function (event) {
+                    const fileContent = event.target.result;
+                    const pages = splitPDFIntoChapters(fileContent);
+                    novel.chapters = pages;
+                    novels.push(novel);
+                    localStorage.setItem('novels', JSON.stringify(novels));
+                    displayNovels();
+                };
+
+                reader.readAsDataURL(file);
 
                 alert('PDF uploaded successfully!');
                 pdfInput.value = ''; // Clear the input field
@@ -158,14 +180,24 @@
             }
         }
 
+        function splitPDFIntoChapters(content) {
+            const dummyChapters = [
+                "Chapter 1: Introduction",
+                "Chapter 2: The Journey Begins",
+                "Chapter 3: The Climax",
+                "Chapter 4: The Resolution"
+            ];
+            return dummyChapters; // Replace this with real PDF parsing logic
+        }
+
         function displayNovels() {
             novelList.innerHTML = '';
             novels.forEach((novel, index) => {
                 const listItem = document.createElement('li');
 
                 const link = document.createElement('a');
-                link.href = novel.url;
-                link.target = '_blank';
+                link.href = '#';
+                link.onclick = () => viewNovel(index);
                 link.textContent = novel.name;
 
                 const deleteButton = document.createElement('button');
@@ -176,6 +208,11 @@
                 listItem.appendChild(deleteButton);
                 novelList.appendChild(listItem);
             });
+        }
+
+        function viewNovel(index) {
+            const novel = novels[index];
+            alert(`Viewing ${novel.name}\nChapters:\n${novel.chapters.join('\n')}`);
         }
 
         function deleteNovel(index) {
