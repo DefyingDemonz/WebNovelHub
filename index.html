@@ -45,6 +45,22 @@
             background-color: #3f3d56;
         }
 
+        .music-button {
+            margin: 20px auto;
+            display: block;
+            padding: 10px 20px;
+            font-size: 1.2rem;
+            color: white;
+            background-color: #6c63ff;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        .music-button:hover {
+            background-color: #3f3d56;
+        }
+
         .score {
             font-size: 1.5rem;
             color: #333;
@@ -59,6 +75,7 @@
             <option value="solo">Solo</option>
             <option value="multiplayer">Multiplayer</option>
         </select>
+        <button class="music-button" onclick="toggleMusic()">Toggle Music</button>
     </div>
 
     <canvas id="snakeGame" width="600" height="400"></canvas>
@@ -94,6 +111,7 @@
         let score2 = 0;
         let gameMode = "solo";
         let game;
+        let isMusicPlaying = false;
 
         const scoreDisplay1 = document.getElementById('score1');
         const scoreDisplay2 = document.getElementById('score2');
@@ -218,7 +236,6 @@
         function startGame() {
             playButton.style.display = 'none';
             retryButton.style.display = 'none';
-            backgroundMusic.play();
             gameMode = document.getElementById('mode').value;
             scoreDisplay2.style.display = gameMode === 'multiplayer' ? 'block' : 'none';
             game = setInterval(drawGame, 100);
@@ -226,8 +243,6 @@
 
         function endGame() {
             retryButton.style.display = 'block';
-            backgroundMusic.pause();
-            backgroundMusic.currentTime = 0;
         }
 
         function restartGame() {
@@ -242,6 +257,16 @@
             scoreDisplay1.textContent = `Player 1 Score: ${score1}`;
             scoreDisplay2.textContent = `Player 2 Score: ${score2}`;
             startGame();
+        }
+
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                backgroundMusic.pause();
+                isMusicPlaying = false;
+            } else {
+                backgroundMusic.play();
+                isMusicPlaying = true;
+            }
         }
     </script>
 </body>
