@@ -100,7 +100,7 @@
         <div id="health-ui">Health: <span id="health">100</span></div>
         <div id="armor-ui">Armor: <span id="armor">0</span></div>
         <div id="shield-ui">Shield: <span id="shield">0</span></div>
-        <button class="button" id="openShopButton">Open Shop</button>
+        <button class="button" onclick="toggleShop()">Open/Close Shop</button>
     </div>
 
     <div id="shop-ui">
@@ -125,7 +125,7 @@
             <span>Shield Upgrade - 15 Points</span>
             <button onclick="buyUpgrade(this)">Buy</button>
         </div>
-        <button class="button" onclick="closeShop()">Close Shop</button>
+        <button class="button" onclick="toggleShop()">Close Shop</button>
     </div>
 
     <canvas id="fpsCanvas" style="display: none;"></canvas>
@@ -137,7 +137,6 @@
         const healthDisplay = document.getElementById('health');
         const armorDisplay = document.getElementById('armor');
         const shieldDisplay = document.getElementById('shield');
-        const openShopButton = document.getElementById('openShopButton');
         const shopUI = document.getElementById('shop-ui');
         const ui = document.getElementById('ui');
         const startScreen = document.getElementById('start-screen');
@@ -162,6 +161,7 @@
         let enemies = [];
         let score = 0;
         let gameInterval;
+        let shootingInterval;
 
         const enemyTypes = [
             {
@@ -205,12 +205,8 @@
             ctx.fillRect(player.x, player.y, player.width, player.height);
         }
 
-        function openShop() {
-            shopUI.style.display = 'block';
-        }
-
-        function closeShop() {
-            shopUI.style.display = 'none';
+        function toggleShop() {
+            shopUI.style.display = shopUI.style.display === 'block' ? 'none' : 'block';
         }
 
         function buyWeapon(button) {
@@ -261,6 +257,18 @@
                     bullets.splice(index, 1);
                 }
             });
+        }
+
+        function shootAutomatically() {
+            const bullet = {
+                x: player.x + player.width / 2 - 2.5,
+                y: player.y,
+                width: 5,
+                height: 10,
+                speed: 10,
+                color: 'white'
+            };
+            bullets.push(bullet);
         }
 
         function drawEnemies() {
@@ -354,10 +362,12 @@
             ui.style.display = 'block';
             canvas.style.display = 'block';
             gameInterval = setInterval(gameLoop, 16);
+            shootingInterval = setInterval(shootAutomatically, 300);
         }
 
         function endGame() {
             clearInterval(gameInterval);
+            clearInterval(shootingInterval);
             alert('Game Over!');
             location.reload();
         }
@@ -366,19 +376,6 @@
             player.x = e.clientX - player.width / 2;
         });
 
-        window.addEventListener('click', () => {
-            const bullet = {
-                x: player.x + player.width / 2 - 2.5,
-                y: player.y,
-                width: 5,
-                height: 10,
-                speed: 10,
-                color: 'white'
-            };
-            bullets.push(bullet);
-        });
-
     </script>
 </body>
 </html>
-
