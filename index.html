@@ -3,103 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Webnovel Hub</title>
+    <title>Customizable Snake Game</title>
     <style>
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
+            text-align: center;
             background-color: #f9f9f9;
-            color: #333;
-            transition: background-color 0.3s, color 0.3s;
-            animation: fadeIn 1s ease;
-        }
-
-        header {
-            background: linear-gradient(135deg, #6c63ff, #3f3d56);
-            color: white;
-            padding: 20px;
-            text-align: center;
-            box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
-            animation: fadeIn 1s ease;
-        }
-
-        header h1 {
-            margin: 0;
-            font-size: 2.5rem;
-        }
-
-        header p {
-            margin: 5px 0 0;
-            font-size: 1rem;
-            opacity: 0.9;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 20px auto;
-            padding: 20px;
-            animation: fadeIn 1s ease;
-            text-align: center;
         }
 
         canvas {
-            background-color: #111;
+            background-color: #32cd32;
             margin: 20px auto;
             display: block;
-            border: 2px solid #6c63ff;
+            border: 2px solid #000;
             border-radius: 10px;
-            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
-            position: relative;
         }
 
-        .game-wrapper {
-            position: relative;
-            display: inline-block;
+        .controls {
+            margin: 20px 0;
         }
 
-        .game-decoration {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: 4px solid #6c63ff;
-            border-radius: 20px;
-            z-index: -1;
-            background: radial-gradient(circle at center, #6c63ff 0%, #3f3d56 100%);
-            animation: fadeIn 1s ease;
-        }
-
-        .trophy {
-            margin: 10px auto;
-            width: 100px;
-            height: 100px;
-            background: url('/mnt/data/A_sleek,_modern_digital_trophy_design_for_a_video_.png') no-repeat center;
-            background-size: contain;
-            display: none;
-        }
-
-        .score {
-            font-size: 1.5rem;
-            color: #6c63ff;
-            margin-top: 10px;
+        .controls input, .controls select {
+            margin: 5px;
+            padding: 5px 10px;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 5px;
         }
 
         .retry-btn {
             display: block;
-            margin: 10px auto;
+            margin: 20px auto;
             padding: 10px 20px;
             font-size: 1rem;
             color: #fff;
@@ -107,41 +43,57 @@
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background 0.3s;
         }
 
         .retry-btn:hover {
             background-color: #3f3d56;
         }
+
+        .score {
+            font-size: 1.5rem;
+            color: #333;
+        }
     </style>
 </head>
 <body>
-    <header>
-        <h1>Welcome to My Webnovel Hub</h1>
-        <p>Your personalized library of stories</p>
-    </header>
-    <div class="container">
-        <div class="game-wrapper">
-            <canvas id="snakeGame" width="400" height="400"></canvas>
-            <div class="game-decoration"></div>
-        </div>
-        <div class="trophy" id="highScoreTrophy"></div>
-        <div class="score" id="score">Score: 0</div>
-        <button class="retry-btn" onclick="restartGame()">Retry</button>
+    <h1>Customizable Snake Game</h1>
+    <div class="controls">
+        <label for="speed">Speed:</label>
+        <select id="speed">
+            <option value="200">Slow</option>
+            <option value="100" selected>Normal</option>
+            <option value="50">Fast</option>
+        </select>
+
+        <label for="snakeColor">Snake Color:</label>
+        <input type="color" id="snakeColor" value="#6c63ff">
+
+        <label for="foodColor">Food Color:</label>
+        <input type="color" id="foodColor" value="#ff0000">
+
+        <button class="retry-btn" onclick="applySettings()">Apply Settings</button>
     </div>
+
+    <canvas id="snakeGame" width="400" height="400"></canvas>
+    <div class="score" id="score">Score: 0</div>
+    <button class="retry-btn" onclick="restartGame()">Retry</button>
+
     <script>
         const canvas = document.getElementById('snakeGame');
         const ctx = canvas.getContext('2d');
-        const box = 20;
-        const rows = canvas.width / box;
-        const columns = canvas.height / box;
+        const scoreDisplay = document.getElementById('score');
+
+        let box = 20;
+        let rows = canvas.width / box;
+        let columns = canvas.height / box;
         let snake = [{ x: 10 * box, y: 10 * box }];
         let food = randomFood();
         let direction;
         let score = 0;
-        let highScore = 0;
-        const scoreDisplay = document.getElementById('score');
-        const trophy = document.getElementById('highScoreTrophy');
+        let gameSpeed = 100;
+        let snakeColor = '#6c63ff';
+        let foodColor = '#ff0000';
+        let game;
 
         document.addEventListener('keydown', changeDirection);
 
@@ -160,15 +112,15 @@
         }
 
         function drawGame() {
-            ctx.fillStyle = '#111';
+            ctx.fillStyle = '#32cd32';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let i = 0; i < snake.length; i++) {
-                ctx.fillStyle = i === 0 ? '#6c63ff' : '#3f3d56';
+                ctx.fillStyle = i === 0 ? snakeColor : '#555';
                 ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
             }
 
-            ctx.fillStyle = 'red';
+            ctx.fillStyle = foodColor;
             ctx.beginPath();
             ctx.arc(food.x + box / 2, food.y + box / 2, box / 2.5, 0, 2 * Math.PI);
             ctx.fill();
@@ -185,10 +137,6 @@
                 score++;
                 scoreDisplay.textContent = `Score: ${score}`;
                 food = randomFood();
-                if (score > highScore) {
-                    highScore = score;
-                    trophy.style.display = 'block';
-                }
             } else {
                 snake.pop();
             }
@@ -218,17 +166,24 @@
         }
 
         function restartGame() {
+            clearInterval(game);
             snake = [{ x: 10 * box, y: 10 * box }];
             food = randomFood();
             direction = null;
             score = 0;
             scoreDisplay.textContent = `Score: ${score}`;
-            trophy.style.display = 'none';
-            clearInterval(game);
-            game = setInterval(drawGame, 100);
+            game = setInterval(drawGame, gameSpeed);
         }
 
-        let game = setInterval(drawGame, 100);
+        function applySettings() {
+            clearInterval(game);
+            gameSpeed = parseInt(document.getElementById('speed').value);
+            snakeColor = document.getElementById('snakeColor').value;
+            foodColor = document.getElementById('foodColor').value;
+            restartGame();
+        }
+
+        game = setInterval(drawGame, gameSpeed);
     </script>
 </body>
 </html>
