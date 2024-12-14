@@ -16,17 +16,6 @@
             }
         }
 
-        @keyframes scaleIn {
-            from {
-                opacity: 0;
-                transform: scale(0.9);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
-        }
-
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
@@ -36,6 +25,7 @@
             transition: background-color 0.3s, color 0.3s;
             animation: fadeIn 1s ease;
         }
+
         header {
             background: linear-gradient(135deg, #6c63ff, #3f3d56);
             color: white;
@@ -44,31 +34,46 @@
             box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
             animation: fadeIn 1s ease;
         }
+
         header h1 {
             margin: 0;
             font-size: 2.5rem;
         }
+
         header p {
             margin: 5px 0 0;
             font-size: 1rem;
             opacity: 0.9;
         }
+
         .container {
             max-width: 1200px;
             margin: 20px auto;
             padding: 20px;
             animation: fadeIn 1s ease;
+            text-align: center;
         }
+
         canvas {
             display: block;
             margin: 20px auto;
-            background-color: #000;
+            background-color: #111;
             border: 2px solid #6c63ff;
+            border-radius: 10px;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.3);
         }
+
+        .score {
+            font-size: 1.5rem;
+            color: #6c63ff;
+            margin-top: 10px;
+        }
+
         .mode-switch {
             text-align: center;
             margin-bottom: 20px;
         }
+
         .mode-switch button {
             margin: 0 10px;
             padding: 10px 15px;
@@ -80,6 +85,7 @@
             background: #6c63ff;
             transition: all 0.3s ease;
         }
+
         .mode-switch button:hover {
             background: #3f3d56;
         }
@@ -97,6 +103,7 @@
             <button onclick="setMode('sepia')">Sepia Mode</button>
         </div>
         <canvas id="snakeGame" width="400" height="400"></canvas>
+        <div class="score" id="score">Score: 0</div>
     </div>
     <script>
         const canvas = document.getElementById('snakeGame');
@@ -111,6 +118,7 @@
         };
         let direction;
         let score = 0;
+        const scoreDisplay = document.getElementById('score');
 
         document.addEventListener('keydown', changeDirection);
 
@@ -122,18 +130,18 @@
         }
 
         function drawGame() {
-            ctx.fillStyle = '#000';
+            ctx.fillStyle = '#111';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
 
             for (let i = 0; i < snake.length; i++) {
                 ctx.fillStyle = i === 0 ? '#6c63ff' : '#3f3d56';
-                ctx.fillRect(snake[i].x, snake[i].y, box, box);
-                ctx.strokeStyle = '#000';
-                ctx.strokeRect(snake[i].x, snake[i].y, box, box);
+                ctx.fillRect(snake[i].x + 2, snake[i].y + 2, box - 4, box - 4);
             }
 
             ctx.fillStyle = 'red';
-            ctx.fillRect(food.x, food.y, box, box);
+            ctx.beginPath();
+            ctx.arc(food.x + box / 2, food.y + box / 2, box / 2.5, 0, 2 * Math.PI);
+            ctx.fill();
 
             let snakeX = snake[0].x;
             let snakeY = snake[0].y;
@@ -145,6 +153,7 @@
 
             if (snakeX === food.x && snakeY === food.y) {
                 score++;
+                scoreDisplay.textContent = `Score: ${score}`;
                 food = {
                     x: Math.floor(Math.random() * rows) * box,
                     y: Math.floor(Math.random() * columns) * box
